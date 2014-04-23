@@ -4,44 +4,122 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import message.Message;;
+import message.Delete;
+import message.Get;
+import message.Insert;
+import message.Message;
+import message.Update;
 
-public class ReadInput  implements Runnable{
-		
-		
-	//this is the thread for reading input from stdin and put the inputted message into input_queue
+;
+
+public class ReadInput implements Runnable {
+
+	// this is the thread for reading input from stdin and put the inputted
+	// message into input_queue
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 
-		System.out.println("Type input: ");
-		while(true) {
-			String content = null;
-			String timestamp;
-			Scanner scanner = new Scanner(System.in);
-			content = scanner.nextLine();
+		while (true) {
+			int key;
+			String value;
+			int level;
+			int destID;
+
 			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-			//get current date time with Date()
 			Date date = new Date();
-			content = content + " " + "From Process" + Process.ID + " MessageID " + Process.messageID;
-			timestamp =  dateFormat.format(date);
-			
-			// if it's delete operation
-			
-			
-			//if it's get operation
-			
-			//if it's insert operation
-			
-			//if it's update operation
-			
-			
-			///////need to use this later
-//			Process.input_queue.add(message);
+			String timeStamp = dateFormat.format(date);
+
+			Boolean validInput = false;
+			Scanner scanner = new Scanner(System.in);
+			do {
+				System.out.println("Enter your command");
+				String content = scanner.nextLine();
+				if (content != null) {
+					String[] contentArr = content.split(" ");
+					int len = contentArr.length;
+					// Command only valid with length between 2 and 4
+					if (len > 1 && len < 5) {
+						switch (contentArr[0].toLowerCase()) {
+
+						// delete operation
+						case "delete":
+							if (len == 2 && isInteger(contentArr[1])) {
+								key = Integer.valueOf(contentArr[1]);
+								destID = getHashingValue(key);
+								Delete delete = new Delete(Process.ID, destID,
+										timeStamp, key);
+								afterMessageGenerated(delete, validInput);
+							}
+							break;
+
+						// get operation
+						case "get":
+							if (len == 3 && isInteger(contentArr[1])
+									&& isInteger(contentArr[2])) {
+								key = Integer.valueOf(contentArr[1]);
+								level = Integer.valueOf(contentArr[2]);
+								destID = getHashingValue(key);
+								Get get = new Get(Process.ID, destID,
+										timeStamp, key, level);
+								afterMessageGenerated(get, validInput);
+							}
+							break;
+
+						// insert operation
+						case "insert":
+							if (len == 4 && isInteger(contentArr[1])
+									&& isInteger(contentArr[3])) {
+								key = Integer.valueOf(contentArr[1]);
+								value = contentArr[2];
+								level = Integer.valueOf(contentArr[3]);
+								destID = getHashingValue(key);
+								Insert insert = new Insert(Process.ID, destID,
+										timeStamp, key, value, level);
+								afterMessageGenerated(insert, validInput);
+							}
+							break;
+
+						// update operation
+						case "update":
+							if (len == 4 && isInteger(contentArr[1])
+									&& isInteger(contentArr[3])) {
+								key = Integer.valueOf(contentArr[1]);
+								value = contentArr[2];
+								level = Integer.valueOf(contentArr[3]);
+								destID = getHashingValue(key);
+								Update update = new Update(Process.ID, destID,
+										timeStamp, key, value, level);
+								afterMessageGenerated(update, validInput);
+							}
+							break;
+						}
+					}
+				}
+			} while (!validInput);
+			scanner.close();
 		}
 	}
-}
 
+	private void afterMessageGenerated(Message message, Boolean valid) {
+		synchronized (this) {
+			Process.messageID++;
+			Process.inputQueue.add(message);
+		}
+		valid = true;
+	}
+
+	private int getHashingValue(int key) {
+		return key % Process.numProc;
+	}
+
+	private boolean isInteger(String s) {
+		try {
+			Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		// only got here if we didn't return false
+		return true;
+	}
+}

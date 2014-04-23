@@ -7,13 +7,13 @@ public abstract class Message implements Serializable {
 	
 	public int from;
 	public int to;
-	public int timestamp;
+	public String timeStamp;
 	public int key;
 	
-	public Message(int from, int to, int timestamp, int key) {
+	public Message(int from, int to, String timeStamp, int key) {
 		this.to = to;
 		this.from = from;
-		this.timestamp = timestamp;
+		this.timeStamp = timeStamp;
 		this.key = key;
 	}
 	

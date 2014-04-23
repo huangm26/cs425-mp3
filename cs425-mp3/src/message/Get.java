@@ -2,9 +2,11 @@ package message;
 
 public class Get extends Message{
 
-	public Get(int from, int to, int timestamp, int key) {
-		super(from, to, timestamp, key);
-		// TODO Auto-generated constructor stub
+	public int level;
+	
+	public Get(int from, int to, String timeStamp, int key, int level) {
+		super(from, to, timeStamp, key);
+		this.level = level;
 	}
 
 }

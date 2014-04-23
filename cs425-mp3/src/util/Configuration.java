@@ -46,6 +46,7 @@ public class Configuration {
 				if (strArr.length == 3) {
 					val = strArr[2];
 					switch (strArr[1]) {
+					
 					// Assign number of processes
 					case "NumberProc":
 						numProc = Integer.valueOf(val);
@@ -64,6 +65,7 @@ public class Configuration {
 						break;
 					}
 				}
+				
 				// Assign IP if the line has more than 3 items
 				if (strArr.length > 3 && strArr[1].equals("IPs")) {
 					for (int i = 0; i < numProc; i++) {

@@ -13,11 +13,10 @@ import java.util.Random;
 
 import message.Message;
 
-public class Process_send implements Runnable {
+public class ProcessSend implements Runnable {
 
-	@SuppressWarnings({ "unused", "unused" })
-	public void send(int destID, Message message) throws IOException,
-			InterruptedException {
+	@SuppressWarnings({ "unused" })
+	public void send(Message message) throws IOException, InterruptedException {
 
 		Random rand = new Random();
 		// Delay in range [0, 2*mean delay]
@@ -25,7 +24,7 @@ public class Process_send implements Runnable {
 
 		DatagramChannel channel;
 		channel = DatagramChannel.open();
-		int destPort = 6000 + destID;
+		int destPort = 6000 + message.to;
 		try {
 			InetSocketAddress destAddress = new InetSocketAddress(
 					InetAddress.getByName(Process.IP), destPort);
@@ -40,7 +39,8 @@ public class Process_send implements Runnable {
 					InetAddress.getByName(Process.IP), destPort));
 			// int bytesend = channel.write(buffer);
 			// channel.disconnect();
-			System.out.println("send " + bytesend + " bytes");
+			System.out.println(String.format("send %d bytes from %d to %d",
+					bytesend, message.from, message.to));
 			channel.close();
 
 		} catch (UnknownHostException e) {
@@ -52,8 +52,32 @@ public class Process_send implements Runnable {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+		// if there are messages in the queue, try to send them all
+		while (true) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			if (!Process.inputQueue.isEmpty()) {
+				try {
+					Message m = Process.inputQueue.poll();
+					send(m);
+					
+					// send 2 replicas
+					if (m.to == 0) {
+						// special case: for server_0, send replicas to server_1
+						// and server_numproc-1
+					} else {
 
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 }
