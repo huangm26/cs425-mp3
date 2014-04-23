@@ -8,11 +8,10 @@ public class Configuration {
 
 	private static volatile Configuration INSTANCE = null;
 	private static String CONFIG_PATH = "config.txt";
- 
+
 	public static int numProc = 0;
 	public static String[] IP;
-	public static int[] delayTime;
-	public static int[] dropRate;
+	public static int[] avgDelayTo;
 
 	public static Configuration getInstance() {
 		if (INSTANCE == null) {
@@ -31,9 +30,8 @@ public class Configuration {
 	}
 
 	private void initialize() {
-		IP = new String[6];
-		delayTime = new int[6];
-		dropRate = new int[6];
+		// IP = new String[numProc];
+		avgDelayTo = new int[3];
 	}
 
 	private void setVariables() {
@@ -48,51 +46,28 @@ public class Configuration {
 				if (strArr.length == 3) {
 					val = strArr[2];
 					switch (strArr[1]) {
+					// Assign number of processes
 					case "NumberProc":
 						numProc = Integer.valueOf(val);
+						IP = new String[numProc];
 						break;
-					
-					// Assign IP
-					case "IP_P0":
-						IP[0] = val;
-						break;
-					case "IP_P1":
-						IP[1] = val;
-						break;
-					case "IP_P2":
-						IP[2] = val;
-						break;
-					case "IP_P3":
-						IP[3] = val;
-						break;
-					case "IP_P4":
-						IP[4] = val;
-						break;
-					case "IP_P5":
-						IP[5] = val;
-						break;
-						
+
 					// Assign delayTime
-					case "Delay_P0":
-						delayTime[0] = Integer.valueOf(val);
+					case "Average_Delay_to_1":
+						avgDelayTo[0] = Integer.valueOf(val);
 						break;
-					case "Delay_P1":
-						delayTime[1] = Integer.valueOf(val);
+					case "Average_Delay_to_2":
+						avgDelayTo[1] = Integer.valueOf(val);
 						break;
-					case "Delay_P2":
-						delayTime[2] = Integer.valueOf(val);
+					case "Average_Delay_to_3":
+						avgDelayTo[2] = Integer.valueOf(val);
 						break;
-					case "Delay_P3":
-						delayTime[3] = Integer.valueOf(val);
-						break;
-					case "Delay_P4":
-						delayTime[4] = Integer.valueOf(val);
-						break;
-					case "Delay_P5":
-						delayTime[5] = Integer.valueOf(val);
-						break;
-						
-					
+					}
+				}
+				// Assign IP if the line has more than 3 items
+				if (strArr.length > 3 && strArr[1].equals("IPs")) {
+					for (int i = 0; i < numProc; i++) {
+						IP[i] = strArr[2 + i];
 					}
 				}
 			}
@@ -101,5 +76,4 @@ public class Configuration {
 			e.printStackTrace();
 		}
 	}
-
 }

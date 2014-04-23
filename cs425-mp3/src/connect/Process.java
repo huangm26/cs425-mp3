@@ -20,42 +20,41 @@ public class Process {
 	public static String IP;
 	public static int myPort;
 	public static int messageID;
-	public static DatagramChannel mychannel;
-	public static int delayTime = 0;
+	public static DatagramChannel myChannel;
 	public static int numProc; // number of processes
-	public static Hashtable<Integer, String> store;
-	public static Queue<Message> input_queue;
+	public static int avgDelayTo1, avgDelayTo2, avgDelayTo3;
+	public static Hashtable<Integer, String> dataStore;
+	public static Queue<Message> inputQueue;
 	
 	public static void main(String args[]) throws IOException
 	{
 			// User determine id
 			Scanner scanner = new Scanner(System.in);
 			do {
-				System.out.println("Enter the ID starting from 0 (to 5): ");
+				System.out.println("Enter the ID starting from 0: ");
 				ID = scanner.nextInt();
 			} while (ID < 0 || ID > 5);
-
-			
 			
 			// Get configuration values
 			Configuration.getInstance();
 			IP = Configuration.IP[ID];
-			delayTime = Configuration.delayTime[ID];
 			numProc = Configuration.numProc;
-			
+			avgDelayTo1 = Configuration.avgDelayTo[0];
+			avgDelayTo2 = Configuration.avgDelayTo[1];
+			avgDelayTo3 = Configuration.avgDelayTo[2];
 			
 			//setup socket channel using UDP
 			myPort = ID + 6000; // define every process's port by the ID
-			mychannel = DatagramChannel.open();
+			/*myChannel = DatagramChannel.open();
 			System.out.println(myPort);
 			//bind to socket to specified IP and Port
-			mychannel.socket().bind(new InetSocketAddress(InetAddress.getByName(IP), myPort));
+			myChannel.socket().bind(new InetSocketAddress(InetAddress.getByName(IP), myPort));
 			// set the channel to non-blocking
 //			mychannel.configureBlocking(false);
 			
 			//instantiate variables
-			input_queue = new LinkedList<Message>();
-			store = new Hashtable<Integer, String>();
+			inputQueue = new LinkedList<Message>();
+			dataStore = new Hashtable<Integer, String>();
 			
 			//start ReadInput thread
 			ReadInput input_thread = new ReadInput();
@@ -63,7 +62,8 @@ public class Process {
 			
 			//start send thread
 			Process_send send_thread = new Process_send();
-			new Thread(send_thread).start();
+			new Thread(send_thread).start();*/
+			System.out.println(String.format("ip=%s, num=%d, d1=%d, d2=%d, d3=%d", IP, numProc, avgDelayTo1, avgDelayTo2, avgDelayTo3));
 	}
 	
 	
@@ -74,7 +74,7 @@ public class Process {
 
 		ByteBuffer buffer = ByteBuffer.allocate(1000);
 		
-		while (mychannel.receive(buffer) == null) {
+		while (myChannel.receive(buffer) == null) {
 			try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e) {
