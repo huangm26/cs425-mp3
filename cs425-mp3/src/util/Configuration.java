@@ -8,8 +8,7 @@ public class Configuration {
 
 	private static volatile Configuration INSTANCE = null;
 	private static String CONFIG_PATH = "config.txt";
-
-
+ 
 	public static int numProc = 0;
 	public static String[] IP;
 	public static int[] delayTime;
@@ -33,6 +32,8 @@ public class Configuration {
 
 	private void initialize() {
 		IP = new String[6];
+		delayTime = new int[6];
+		dropRate = new int[6];
 	}
 
 	private void setVariables() {
@@ -47,7 +48,6 @@ public class Configuration {
 				if (strArr.length == 3) {
 					val = strArr[2];
 					switch (strArr[1]) {
-					
 					case "NumberProc":
 						numProc = Integer.valueOf(val);
 						break;
@@ -72,7 +72,25 @@ public class Configuration {
 						IP[5] = val;
 						break;
 						
-					
+					// Assign delayTime
+					case "Delay_P0":
+						delayTime[0] = Integer.valueOf(val);
+						break;
+					case "Delay_P1":
+						delayTime[1] = Integer.valueOf(val);
+						break;
+					case "Delay_P2":
+						delayTime[2] = Integer.valueOf(val);
+						break;
+					case "Delay_P3":
+						delayTime[3] = Integer.valueOf(val);
+						break;
+					case "Delay_P4":
+						delayTime[4] = Integer.valueOf(val);
+						break;
+					case "Delay_P5":
+						delayTime[5] = Integer.valueOf(val);
+						break;
 						
 					
 					}
