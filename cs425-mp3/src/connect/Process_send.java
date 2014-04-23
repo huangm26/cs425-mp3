@@ -18,7 +18,7 @@ import message.Message;
 public class Process_send implements Runnable {
 
 	@SuppressWarnings({ "unused", "unused" })
-	public void unicast_send(int destID, Message message)
+	public void send(int destID, Message message)
 			throws IOException, InterruptedException {
 		
 			Random rand = new Random();
@@ -36,11 +36,11 @@ public class Process_send implements Runnable {
 					os.writeObject(message);
 					byte[] data = outputStream.toByteArray();
 					ByteBuffer buffer = ByteBuffer.wrap(data);				
-					channel.connect(new InetSocketAddress(InetAddress.getByName(Process.IP), destPort));
-		
-					int bytesend = channel.write(buffer);
-					channel.disconnect();
-//					System.out.println("send "+ bytesend + " bytes");
+//					channel.connect(new InetSocketAddress(InetAddress.getByName(Process.IP), destPort));
+					int bytesend = channel.send(buffer, new InetSocketAddress(InetAddress.getByName(Process.IP), destPort));
+//					int bytesend = channel.write(buffer);
+//					channel.disconnect();
+					System.out.println("send "+ bytesend + " bytes");
 					channel.close();
 					
 				
