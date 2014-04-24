@@ -10,6 +10,6 @@
 
 # IPs 127.0.0.1 127.0.0.1 127.0.0.1 127.0.0.1
 
-# Average_Delay_to_1 0
-# Average_Delay_to_2 0
-# Average_Delay_to_3 0
+# Average_Delay_to_1 100
+# Average_Delay_to_2 2000
+# Average_Delay_to_3 4000

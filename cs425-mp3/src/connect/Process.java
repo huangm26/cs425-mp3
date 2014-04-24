@@ -95,11 +95,11 @@ public class Process {
 	}
 
 	public static void receiveAll() throws IOException, InterruptedException {
-		System.out.println("receiving");
+//		System.out.println("receiving");
 		Message msg = null;
 		receiveQueue.add(receive());
 		while (receiveQueue.peek() != null) {
-			System.out.println("have");
+//			System.out.println("have");
 			msg = receiveQueue.poll();
 			if (msg.isGet()) {
 				System.out.println("get");
@@ -115,13 +115,16 @@ public class Process {
 				onRecvDelete((Delete)msg);
 			} else if (msg.isGet_resp())
 			{
+				System.out.println("Get_resp");
 				onRecvGet_resp((Get_resp)msg);
 			} else if(msg.isInsert_ack())
 			{
+				System.out.println("Insert_ack");
 				onRecvInsert_ack((Insert_ack)msg);
 				
 			} else if(msg.isUpdate_ack())
 			{
+				System.out.println("Update_ack");
 				onRecvUpdate_ack((Update_ack)msg);
 			}
 		}
@@ -157,13 +160,13 @@ public class Process {
 		 {
 			String content = dataStore.get(g.key);
 			
-			System.out.println("This is before resp get " + content);
-			Get_resp resp = new Get_resp(g.to, g.from, g.timeStamp, g.key, g.messageID, content);
+//			System.out.println("This is before resp get " + content);
+			Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp, g.key, g.messageID, content);
 			send((Message)resp, g.from);
 		 }	else
 		 {
 			 String content = null;
-			 Get_resp resp = new Get_resp(g.to, g.from, g.timeStamp, g.key, g.messageID, content);
+			 Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp, g.key, g.messageID, content);
 			 send((Message)resp, g.from);
 		 }
 	}
@@ -173,16 +176,16 @@ public class Process {
 			dataStore.put(i.key, i.value);
 		}
 		//no matter contains key or not, send ack anyway to prevent deadlock
-		Insert_ack ack = new Insert_ack(i.to, i.from, i.timeStamp, i.key, i.messageID);
+		Insert_ack ack = new Insert_ack(Process.ID, i.from, i.timeStamp, i.key, i.messageID);
 		send((Message)ack, i.from);
 	}
 
 	private static void onRecvUpdate(Update u) throws IOException, InterruptedException {
 		// If key already exists, the old value will be replaced
-		if (!dataStore.containsKey(u.key)) {
+		if (dataStore.containsKey(u.key)) {
 			dataStore.put(u.key, u.value);
 		}
-		Update_ack ack = new Update_ack(u.to, u.from, u.timeStamp, u.key, u.messageID);
+		Update_ack ack = new Update_ack(Process.ID, u.from, u.timeStamp, u.key, u.messageID);
 		send((Message) ack, u.from);
 	}
 
@@ -196,6 +199,8 @@ public class Process {
 	private static void onRecvInsert_ack(Insert_ack ack)
 	{
 		//mark the ack as true
+//		System.out.println("ack from " + ack.from);
+//		System.out.println("messageID " + ack.messageID);
 		Process.ack[ack.messageID][ack.from] = true;
 	}
 	
@@ -222,7 +227,7 @@ public class Process {
 	}
 	
 	private static void send(Message message, int to) throws IOException, InterruptedException {
-
+		System.out.println("sending response");
 		Random rand = new Random();
 		// Delay in range [0, 2*mean delay]
 		// int randomDelay = rand.nextInt(2 * Process.delayTime + 1);

@@ -105,15 +105,67 @@ public class ProcessSend implements Runnable {
 				boolean sentinel = true;
 				while(sentinel)
 				{
-					for(int i = 0; i < 3; i++)
-					{
-						if(Process.ack[m.messageID][i])
-						{
-							System.out.println("Level one insert successful");
-							sentinel = false;
-							break;
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
 						}
-					}
+						//special case when destionation is P0
+						if(m.to  == 0)
+						{
+							if(Process.ack[m.messageID][Process.numProc-1])
+							{
+								System.out.println("Level one insert successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][0])
+							{
+								System.out.println("Level one insert successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][1])
+							{
+								System.out.println("Level one insert successful");
+								sentinel = false;
+								break;
+							}
+							
+						}	else if(m.to == Process.numProc -1)
+						//special case when destination is the last Process
+						{
+							if(Process.ack[m.messageID][0])
+							{
+								System.out.println("Level one insert successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][Process.numProc-1])
+							{
+								System.out.println("Level one insert successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][Process.numProc-2])
+							{
+								System.out.println("Level one insert successful");
+								sentinel = false;
+								break;
+							}
+						}	else
+						{
+							for(int i = -1; i < 2; i++)
+							{
+								if(Process.ack[m.messageID][m.to + i])
+								{
+									System.out.println("Level one insert successful");
+									sentinel = false;
+									break;
+								}
+							}
+						}
+					
 				}
 			}	
 			//level all case
@@ -122,18 +174,56 @@ public class ProcessSend implements Runnable {
 				boolean sentinel = true;
 				while(sentinel)
 				{
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
 					boolean temp = true;
-					for(int i = 0; i < 3; i++)
+					
+					//special case when destionation is P0
+					if(m.to  == 0)
 					{
-						temp = (temp && Process.ack[m.messageID][i]);
 						
-					}
-					if(temp)
+						temp = (temp && Process.ack[m.messageID][Process.numProc-1]);
+						temp = (temp && Process.ack[m.messageID][0]);
+						temp = (temp && Process.ack[m.messageID][1]);
+						if(temp)
+						{
+							System.out.println("Level All insert successful");
+							break;
+						}
+						
+					}	else if(m.to == Process.numProc -1)
+					//special case when destination is the last Process
 					{
-						System.out.println("Level All insert successful");
-						break;
+						
+						temp = (temp && Process.ack[m.messageID][0]);
+						temp = (temp && Process.ack[m.messageID][Process.numProc-1]);
+						temp = (temp && Process.ack[m.messageID][Process.numProc-2]);
+						if(temp)
+						{
+							System.out.println("Level All insert successful");
+							break;
+						}
+						
+					}	else
+					{
+						for(int i = -1; i < 2; i++)
+						{
+							temp = (temp && Process.ack[m.messageID][m.to + i]);
+							
+						}
+						if(temp)
+						{
+							System.out.println("Level All insert successful");
+							break;
+						}
 					}
+					
 				}
+				
+				
 			}
 		}	else if(m.isUpdate())
 		{
@@ -143,15 +233,67 @@ public class ProcessSend implements Runnable {
 				boolean sentinel = true;
 				while(sentinel)
 				{
-					for(int i = 0; i < 3; i++)
-					{
-						if(Process.ack[m.messageID][i])
-						{
-							System.out.println("Level one update successful");
-							sentinel = false;
-							break;
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
 						}
-					}
+						//special case when destionation is P0
+						if(m.to  == 0)
+						{
+							if(Process.ack[m.messageID][Process.numProc-1])
+							{
+								System.out.println("Level one update successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][0])
+							{
+								System.out.println("Level one update successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][1])
+							{
+								System.out.println("Level one update successful");
+								sentinel = false;
+								break;
+							}
+							
+						}	else if(m.to == Process.numProc -1)
+						//special case when destination is the last Process
+						{
+							if(Process.ack[m.messageID][0])
+							{
+								System.out.println("Level one update successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][Process.numProc-1])
+							{
+								System.out.println("Level one update successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][Process.numProc-2])
+							{
+								System.out.println("Level one update successful");
+								sentinel = false;
+								break;
+							}
+						}	else
+						{
+							for(int i = -1; i < 2; i++)
+							{
+								if(Process.ack[m.messageID][m.to + i])
+								{
+									System.out.println("Level one update successful");
+									sentinel = false;
+									break;
+								}
+							}
+						}
+					
 				}
 			}	
 			//level all case
@@ -160,20 +302,56 @@ public class ProcessSend implements Runnable {
 				boolean sentinel = true;
 				while(sentinel)
 				{
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
 					boolean temp = true;
-					for(int i = 0; i < 3; i++)
+					
+					//special case when destionation is P0
+					if(m.to  == 0)
 					{
-						temp = (temp && Process.ack[m.messageID][i]);
 						
-					}
-					if(temp)
+						temp = (temp && Process.ack[m.messageID][Process.numProc-1]);
+						temp = (temp && Process.ack[m.messageID][0]);
+						temp = (temp && Process.ack[m.messageID][1]);
+						if(temp)
+						{
+							System.out.println("Level All update successful");
+							break;
+						}
+						
+					}	else if(m.to == Process.numProc -1)
+					//special case when destination is the last Process
 					{
-						System.out.println("Level All update successful");
-						break;
+						
+						temp = (temp && Process.ack[m.messageID][0]);
+						temp = (temp && Process.ack[m.messageID][Process.numProc-1]);
+						temp = (temp && Process.ack[m.messageID][Process.numProc-2]);
+						if(temp)
+						{
+							System.out.println("Level All update successful");
+							break;
+						}
+						
+					}	else
+					{
+						for(int i = -1; i < 2; i++)
+						{
+							temp = (temp && Process.ack[m.messageID][m.to + i]);
+							
+						}
+						if(temp)
+						{
+							System.out.println("Level All update successful");
+							break;
+						}
 					}
-				
+					
 				}
 			}
+				
 		}	else if(m.isGet())
 		{
 			//level one case
@@ -182,15 +360,67 @@ public class ProcessSend implements Runnable {
 				boolean sentinel = true;
 				while(sentinel)
 				{
-					for(int i = 0; i < 3; i++)
-					{
-						if(Process.ack[m.messageID][i])
-						{
-							System.out.println("Level one get successful");
-							sentinel = false;
-							break;
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
 						}
-					}
+						//special case when destionation is P0
+						if(m.to  == 0)
+						{
+							if(Process.ack[m.messageID][Process.numProc-1])
+							{
+								System.out.println("Level one get successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][0])
+							{
+								System.out.println("Level one get successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][1])
+							{
+								System.out.println("Level one get successful");
+								sentinel = false;
+								break;
+							}
+							
+						}	else if(m.to == Process.numProc -1)
+						//special case when destination is the last Process
+						{
+							if(Process.ack[m.messageID][0])
+							{
+								System.out.println("Level one get successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][Process.numProc-1])
+							{
+								System.out.println("Level one get successful");
+								sentinel = false;
+								break;
+							}
+							if(Process.ack[m.messageID][Process.numProc-2])
+							{
+								System.out.println("Level one get successful");
+								sentinel = false;
+								break;
+							}
+						}	else
+						{
+							for(int i = -1; i < 2; i++)
+							{
+								if(Process.ack[m.messageID][m.to + i])
+								{
+									System.out.println("Level one get successful");
+									sentinel = false;
+									break;
+								}
+							}
+						}
+					
 				}
 			}	
 			//level all case
@@ -199,18 +429,53 @@ public class ProcessSend implements Runnable {
 				boolean sentinel = true;
 				while(sentinel)
 				{
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
 					boolean temp = true;
-					for(int i = 0; i < 3; i++)
+					
+					//special case when destionation is P0
+					if(m.to  == 0)
 					{
-						temp = (temp && Process.ack[m.messageID][i]);
 						
-					}
-					if(temp)
+						temp = (temp && Process.ack[m.messageID][Process.numProc-1]);
+						temp = (temp && Process.ack[m.messageID][0]);
+						temp = (temp && Process.ack[m.messageID][1]);
+						if(temp)
+						{
+							System.out.println("Level All get successful");
+							break;
+						}
+						
+					}	else if(m.to == Process.numProc -1)
+					//special case when destination is the last Process
 					{
-						System.out.println("Level All update successful");
-						break;
+						
+						temp = (temp && Process.ack[m.messageID][0]);
+						temp = (temp && Process.ack[m.messageID][Process.numProc-1]);
+						temp = (temp && Process.ack[m.messageID][Process.numProc-2]);
+						if(temp)
+						{
+							System.out.println("Level All get successful");
+							break;
+						}
+						
+					}	else
+					{
+						for(int i = -1; i < 2; i++)
+						{
+							temp = (temp && Process.ack[m.messageID][m.to + i]);
+							
+						}
+						if(temp)
+						{
+							System.out.println("Level All get successful");
+							break;
+						}
 					}
-				
+					
 				}
 			}
 		}
