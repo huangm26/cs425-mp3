@@ -27,7 +27,8 @@ public class Process {
 	public static DatagramChannel myChannel;
 	public static int numProc; // number of processes
 	public static int avgDelayTo1, avgDelayTo2, avgDelayTo3;
-	public static Hashtable<Integer, String> dataStore;
+	public static Hashtable<Integer, String> dataStore; // Hashtable is already
+														// synchronized
 	public static Queue<Message> inputQueue;
 
 	public static void main(String args[]) throws IOException {
@@ -76,35 +77,18 @@ public class Process {
 		}
 	}
 
-	public static void onGet(Get g) {
-		
-	}
-
-	public static void onInsert(Insert i) {
-		if (!dataStore.contains(i.key)) {
-			dataStore.put(i.key, i.value);
-		}
-	}
-
-	public static void onUpdate(Update u) {
-		
-	}
-
-	public static void onDelete(Delete d) {
-		if (dataStore.contains(d.key)) {
-			dataStore.remove(d.key);
-		}
-	}
-
 	public static void receiveAll() throws IOException {
-		Message recvMsg = null;
-		for (int i = 0; i < numProc; i++) {
-			recvMsg = receive();
-			if (recvMsg.isGet()) {
+		System.out.println("receiving");
+		Message msg = null;
+		inputQueue.add(receive());
+		while (inputQueue.peek() != null) {
+			System.out.println("have");
+			msg = inputQueue.poll();
+			if (msg.isGet()) {
 				System.out.println("get");
-			} else if (recvMsg.isInsert()) {
+			} else if (msg.isInsert()) {
 				System.out.println("insert");
-			} else if (recvMsg.isUpdate()) {
+			} else if (msg.isUpdate()) {
 				System.out.println("update");
 			} else {
 				System.out.println("delete");
@@ -113,7 +97,6 @@ public class Process {
 	}
 
 	public static Message receive() throws IOException {
-
 		Message message = null;
 
 		ByteBuffer buffer = ByteBuffer.allocate(1000);
@@ -136,5 +119,28 @@ public class Process {
 			e.printStackTrace();
 		}
 		return message;
+	}
+
+	private static String onRecvGet(Get g) {
+		return dataStore.contains(g.key) ? dataStore.get(g.key) : null;
+	}
+
+	private static void onRecvInsert(Insert i) {
+		if (!dataStore.contains(i.key)) {
+			dataStore.put(i.key, i.value);
+		}
+	}
+
+	private static void onRecvUpdate(Update u) {
+		// If key already exists, the old value will be replaced
+		if (!dataStore.contains(u.key)) {
+			dataStore.put(u.key, u.value);
+		}
+	}
+
+	private static void onRecvDelete(Delete d) {
+		if (dataStore.contains(d.key)) {
+			dataStore.remove(d.key);
+		}
 	}
 }
