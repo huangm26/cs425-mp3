@@ -26,15 +26,15 @@ public class ReadInput implements Runnable {
 			int level;
 			int destID;
 
-			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-			Date date = new Date();
-			String timeStamp = dateFormat.format(date);
-
 			Boolean validInput = false;
 			Scanner scanner = new Scanner(System.in);
+
 			do {
 				System.out.println("Enter your command");
 				String content = scanner.nextLine();
+				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+				Date date = new Date();
+				String timeStamp = dateFormat.format(date);
 				if (content != null) {
 					String[] contentArr = content.split(" ");
 					int len = contentArr.length;
@@ -48,7 +48,7 @@ public class ReadInput implements Runnable {
 								key = Integer.valueOf(contentArr[1]);
 								destID = getHashingValue(key);
 								Delete delete = new Delete(Process.ID, destID,
-										timeStamp, key);
+										date, key, Process.messageID);
 								afterMessageGenerated(delete, validInput);
 							}
 							break;
@@ -61,7 +61,7 @@ public class ReadInput implements Runnable {
 								level = Integer.valueOf(contentArr[2]);
 								destID = getHashingValue(key);
 								Get get = new Get(Process.ID, destID,
-										timeStamp, key, level);
+										date, key, Process.messageID, level);
 								afterMessageGenerated(get, validInput);
 							}
 							break;
@@ -74,8 +74,9 @@ public class ReadInput implements Runnable {
 								value = contentArr[2];
 								level = Integer.valueOf(contentArr[3]);
 								destID = getHashingValue(key);
+								System.out.println("Inserting to server " + destID);
 								Insert insert = new Insert(Process.ID, destID,
-										timeStamp, key, value, level);
+										date, key, Process.messageID, value, level);
 								afterMessageGenerated(insert, validInput);
 							}
 							break;
@@ -89,7 +90,7 @@ public class ReadInput implements Runnable {
 								level = Integer.valueOf(contentArr[3]);
 								destID = getHashingValue(key);
 								Update update = new Update(Process.ID, destID,
-										timeStamp, key, value, level);
+										date, key, Process.messageID, value, level);
 								afterMessageGenerated(update, validInput);
 							}
 							break;

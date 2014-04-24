@@ -11,12 +11,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Random;
 
+import message.Get;
+import message.Insert;
 import message.Message;
+import message.Update;
 
 public class ProcessSend implements Runnable {
 
 	@SuppressWarnings({ "unused" })
-	public void send(Message message) throws IOException, InterruptedException {
+	public void send(Message message, int to) throws IOException, InterruptedException {
 
 		Random rand = new Random();
 		// Delay in range [0, 2*mean delay]
@@ -24,7 +27,7 @@ public class ProcessSend implements Runnable {
 
 		DatagramChannel channel;
 		channel = DatagramChannel.open();
-		int destPort = 6000 + message.to;
+		int destPort = 6000 + to;
 		try {
 			InetSocketAddress destAddress = new InetSocketAddress(
 					InetAddress.getByName(Process.IP), destPort);
@@ -39,8 +42,8 @@ public class ProcessSend implements Runnable {
 					InetAddress.getByName(Process.IP), destPort));
 			// int bytesend = channel.write(buffer);
 			// channel.disconnect();
-			System.out.println(String.format("send %d bytes from %d to %d",
-					bytesend, message.from, message.to));
+//			System.out.println(String.format("send %d bytes from %d to %d",
+//					bytesend, message.from, message.to));
 			channel.close();
 
 		} catch (UnknownHostException e) {
@@ -53,6 +56,7 @@ public class ProcessSend implements Runnable {
 	@Override
 	public void run() {
 		// if there are messages in the queue, try to send them all
+		System.out.println("starting send thread");
 		while (true) {
 			try {
 				Thread.sleep(1000);
@@ -62,19 +66,151 @@ public class ProcessSend implements Runnable {
 			if (!Process.inputQueue.isEmpty()) {
 				try {
 					Message m = Process.inputQueue.poll();
-					send(m);
+					System.out.println("ready to send message");
+					send(m, m.to);
 					
 					// send 2 replicas
 					if (m.to == 0) {
 						// special case: for server_0, send replicas to server_1
 						// and server_numproc-1
-					} else {
-
+						send(m,m.to+1);
+						send(m,Process.numProc -1 );
+					} else if(m.to == Process.numProc -1){	
+						send(m, 0);
+						send(m, m.to-1);
+					}	else
+					{
+						send(m,m.to+1);
+						send(m,m.to-1);
 					}
+					wait_for_ack(m);
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
+				}
+				
+			}
+		}
+	}
+	
+	private void wait_for_ack(Message m)
+	{
+		if(m.isInsert())
+		{
+			//level one case
+			if(((Insert)m).level == 0)
+			{
+				boolean sentinel = true;
+				while(sentinel)
+				{
+					for(int i = 0; i < 3; i++)
+					{
+						if(Process.ack[m.messageID][i])
+						{
+							System.out.println("Level one insert successful");
+							sentinel = false;
+							break;
+						}
+					}
+				}
+			}	
+			//level all case
+			else if(((Insert)m).level == 9)
+			{
+				boolean sentinel = true;
+				while(sentinel)
+				{
+					boolean temp = true;
+					for(int i = 0; i < 3; i++)
+					{
+						temp = (temp && Process.ack[m.messageID][i]);
+						
+					}
+					if(temp)
+					{
+						System.out.println("Level All insert successful");
+						break;
+					}
+				}
+			}
+		}	else if(m.isUpdate())
+		{
+			//level one case
+			if(((Update)m).level == 0)
+			{
+				boolean sentinel = true;
+				while(sentinel)
+				{
+					for(int i = 0; i < 3; i++)
+					{
+						if(Process.ack[m.messageID][i])
+						{
+							System.out.println("Level one update successful");
+							sentinel = false;
+							break;
+						}
+					}
+				}
+			}	
+			//level all case
+			else if(((Update)m).level == 9)
+			{
+				boolean sentinel = true;
+				while(sentinel)
+				{
+					boolean temp = true;
+					for(int i = 0; i < 3; i++)
+					{
+						temp = (temp && Process.ack[m.messageID][i]);
+						
+					}
+					if(temp)
+					{
+						System.out.println("Level All update successful");
+						break;
+					}
+				
+				}
+			}
+		}	else if(m.isGet())
+		{
+			//level one case
+			if(((Get)m).level == 0)
+			{
+				boolean sentinel = true;
+				while(sentinel)
+				{
+					for(int i = 0; i < 3; i++)
+					{
+						if(Process.ack[m.messageID][i])
+						{
+							System.out.println("Level one get successful");
+							sentinel = false;
+							break;
+						}
+					}
+				}
+			}	
+			//level all case
+			else if(((Get)m).level == 9)
+			{
+				boolean sentinel = true;
+				while(sentinel)
+				{
+					boolean temp = true;
+					for(int i = 0; i < 3; i++)
+					{
+						temp = (temp && Process.ack[m.messageID][i]);
+						
+					}
+					if(temp)
+					{
+						System.out.println("Level All update successful");
+						break;
+					}
+				
 				}
 			}
 		}

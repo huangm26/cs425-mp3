@@ -1,20 +1,23 @@
 package message;
 
 import java.io.Serializable;
+import java.util.Date;
 
 
 public abstract class Message implements Serializable {
 	
 	public int from;
 	public int to;
-	public String timeStamp;
+	public Date timeStamp;
 	public int key;
+	public int messageID;
 	
-	public Message(int from, int to, String timeStamp, int key) {
+	public Message(int from, int to, Date timeStamp, int key, int messageID) {
 		this.to = to;
 		this.from = from;
 		this.timeStamp = timeStamp;
 		this.key = key;
+		this.messageID = messageID;
 	}
 	
 	public boolean isDelete() {
@@ -31,5 +34,17 @@ public abstract class Message implements Serializable {
 	
 	public boolean isUpdate() {
 		return this instanceof Update;
+	}
+	
+	public boolean isInsert_ack() {
+		return this instanceof Insert_ack;
+	}
+	
+	public boolean isUpdate_ack() {
+		return this instanceof Update_ack;
+	}
+	
+	public boolean isGet_resp() {
+		return this instanceof Get_resp;
 	}
 }
