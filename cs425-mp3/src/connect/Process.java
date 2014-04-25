@@ -42,6 +42,10 @@ public class Process {
 	public static Queue<Message> receiveQueue;
 //	public static ArrayList<Message> ackList;
 	public static boolean[][] ack;
+	public static boolean[] get_level_one;
+	//starts from 0, and if reaches 3, means it have get all responses
+	public static int[] get_level_all;
+	public static Get_resp[] store_resp;
 
 	public static void main(String args[]) throws IOException, InterruptedException {
 
@@ -78,7 +82,10 @@ public class Process {
 		messageID = 0;
 //		ackList = new ArrayList<Message>();
 		ack = new boolean[10000][numProc];
-		initAck();
+		get_level_one = new boolean[10000];
+		get_level_all = new int[10000];
+		store_resp = new Get_resp[10000];
+		init_array();
 		
 		// start ReadInput thread
 		ReadInput inputThread = new ReadInput();
@@ -88,6 +95,7 @@ public class Process {
 		ProcessSend sendThread = new ProcessSend();
 		new Thread(sendThread).start();
 
+		
 		// receiving
 		while (true) {
 			receiveAll();
@@ -161,12 +169,12 @@ public class Process {
 			String content = dataStore.get(g.key);
 			
 //			System.out.println("This is before resp get " + content);
-			Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp, g.key, g.messageID, content);
+			Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp, g.key, g.messageID, content, g.level);
 			send((Message)resp, g.from);
 		 }	else
 		 {
 			 String content = null;
-			 Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp, g.key, g.messageID, content);
+			 Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp, g.key, g.messageID, content, g.level);
 			 send((Message)resp, g.from);
 		 }
 	}
@@ -214,16 +222,56 @@ public class Process {
 	{
 		//mark the ack as true
 		Process.ack[resp.messageID][resp.from] = true;
-		System.out.println("This is the result from get: " + resp.content);
+		
+		//It is a level one response
+		if(resp.level == 1)
+		{
+			//if haven't received response of this message
+			if(!Process.get_level_one[resp.messageID])
+			{
+				System.out.println("This is the result from get: " + resp.content);
+				Process.get_level_one[resp.messageID] = true;
+			}
+		}	else if(resp.level == 9)
+		//it is a level 9 response
+		{
+			Process.get_level_all[resp.messageID] ++;
+			
+			//if this is the first response, store it 
+			if(store_resp[resp.messageID] == null)
+			{
+				store_resp[resp.messageID] = resp;
+			}	else
+			//if not first one, compare
+			{
+				//the received response is the latest
+				if(resp.timeStamp.compareTo(store_resp[resp.messageID].timeStamp) > 0)
+				{
+					store_resp[resp.messageID] = resp;
+				}
+			}
+			
+			//has get all responses
+			if(Process.get_level_all[resp.messageID] == 3)
+			{
+				System.out.println("This is the result from get: " + store_resp[resp.messageID].content);
+			}
+		}
+		
 	}
 	
-	private static void initAck()
+	private static void init_array()
 	{
 		for(int i = 0; i < 10000; i++)
+		{
 			for(int j = 0; j < 3; j++)
 			{
 				ack[i][j] = false;
 			}
+			get_level_one[i] = false;
+			get_level_all[i] = 0;
+			store_resp[i] = null;
+		}
 	}
 	
 	private static void send(Message message, int to) throws IOException, InterruptedException {

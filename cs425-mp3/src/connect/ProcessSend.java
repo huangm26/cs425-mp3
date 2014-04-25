@@ -17,98 +17,72 @@ import message.Message;
 import message.Update;
 
 public class ProcessSend implements Runnable {
-
-	@SuppressWarnings({ "unused" })
-	public void send(Message message, int to) throws IOException, InterruptedException {
-
-		Random rand = new Random();
-		// Delay in range [0, 2*mean delay]
-		// int randomDelay = rand.nextInt(2 * Process.delayTime + 1);
-
-		DatagramChannel channel;
-		channel = DatagramChannel.open();
-		int destPort = 6000 + to;
-		try {
-			InetSocketAddress destAddress = new InetSocketAddress(
-					InetAddress.getByName(Process.IP), destPort);
-			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			ObjectOutputStream os = new ObjectOutputStream(outputStream);
-			os.writeObject(message);
-			byte[] data = outputStream.toByteArray();
-			ByteBuffer buffer = ByteBuffer.wrap(data);
-			// channel.connect(new
-			// InetSocketAddress(InetAddress.getByName(Process.IP), destPort));
-			int bytesend = channel.send(buffer, new InetSocketAddress(
-					InetAddress.getByName(Process.IP), destPort));
-			// int bytesend = channel.write(buffer);
-			// channel.disconnect();
-//			System.out.println(String.format("send %d bytes from %d to %d",
-//					bytesend, message.from, message.to));
-			channel.close();
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (SocketException e) {
-			e.printStackTrace();
-		}
-	}
-
+	
 	@Override
 	public void run() {
 		// if there are messages in the queue, try to send them all
 		System.out.println("starting send thread");
 		while (true) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(500);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
 			if (!Process.inputQueue.isEmpty()) {
-				try {
-					Message m = Process.inputQueue.poll();
-					System.out.println("ready to send message");
-					send(m, m.to);
-					
-					// send 2 replicas
-					if (m.to == 0) {
-						// special case: for server_0, send replicas to server_1
-						// and server_numproc-1
-						send(m,m.to+1);
-						send(m,Process.numProc -1 );
-					} else if(m.to == Process.numProc -1){	
-						send(m, 0);
-						send(m, m.to-1);
-					}	else
-					{
-						send(m,m.to+1);
-						send(m,m.to-1);
-					}
-					wait_for_ack(m);
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				Message m = Process.inputQueue.poll();
+				System.out.println("ready to send message");
+//					send(m, m.to, Process.avgDelayTo2);
+				Real_send send1 = new Real_send(m, m.to, Process.avgDelayTo2);
+				new Thread(send1).start();
 				
+				// send 2 replicas
+				if (m.to == 0) {
+					// special case: for server_0, send replicas to server_1
+					// and server_numproc-1
+//						send(m,m.to+1, Process.avgDelayTo3);
+//						send(m,Process.numProc -1, Process.avgDelayTo1 );
+					Real_send send2 = new Real_send(m,m.to+1, Process.avgDelayTo3);
+					new Thread(send2).start();
+					Real_send send3 = new Real_send(m,Process.numProc -1, Process.avgDelayTo1 );
+					new Thread(send3).start();
+					
+				} else if(m.to == Process.numProc -1){	
+//						send(m, 0, Process.avgDelayTo3);
+//						send(m, m.to-1, Process.avgDelayTo1);
+					Real_send send2 = new Real_send(m, 0, Process.avgDelayTo3);
+					new Thread(send2).start();
+					Real_send send3 = new Real_send(m, m.to-1, Process.avgDelayTo1);
+					new Thread(send3).start();
+				}	else
+				{
+//						send(m,m.to+1, Process.avgDelayTo3);
+//						send(m,m.to-1, Process.avgDelayTo1);
+					Real_send send2 = new Real_send(m,m.to+1, Process.avgDelayTo3);
+					new Thread(send2).start();
+					Real_send send3 = new Real_send(m,m.to-1, Process.avgDelayTo1);
+					new Thread(send3).start();
+				}
+				wait_for_ack(m);
 			}
 		}
 	}
+
 	
 	private void wait_for_ack(Message m)
 	{
 		if(m.isInsert())
 		{
 			//level one case
-			if(((Insert)m).level == 0)
+			if(((Insert)m).level == 1)
 			{
 				boolean sentinel = true;
 				while(sentinel)
 				{
 						try {
-							Thread.sleep(500);
-						} catch (InterruptedException e1) {
-							e1.printStackTrace();
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
 						//special case when destionation is P0
 						if(m.to  == 0)
@@ -175,9 +149,10 @@ public class ProcessSend implements Runnable {
 				while(sentinel)
 				{
 					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 					boolean temp = true;
 					
@@ -220,7 +195,6 @@ public class ProcessSend implements Runnable {
 							break;
 						}
 					}
-					
 				}
 				
 				
@@ -228,16 +202,17 @@ public class ProcessSend implements Runnable {
 		}	else if(m.isUpdate())
 		{
 			//level one case
-			if(((Update)m).level == 0)
+			if(((Update)m).level == 1)
 			{
 				boolean sentinel = true;
 				while(sentinel)
 				{
-						try {
-							Thread.sleep(500);
-						} catch (InterruptedException e1) {
-							e1.printStackTrace();
-						}
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 						//special case when destionation is P0
 						if(m.to  == 0)
 						{
@@ -303,9 +278,10 @@ public class ProcessSend implements Runnable {
 				while(sentinel)
 				{
 					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 					boolean temp = true;
 					
@@ -354,17 +330,20 @@ public class ProcessSend implements Runnable {
 				
 		}	else if(m.isGet())
 		{
+			System.out.println("IS a get");
 			//level one case
-			if(((Get)m).level == 0)
+			if(((Get)m).level == 1)
 			{
 				boolean sentinel = true;
 				while(sentinel)
 				{
-						try {
-							Thread.sleep(500);
-						} catch (InterruptedException e1) {
-							e1.printStackTrace();
-						}
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 						//special case when destionation is P0
 						if(m.to  == 0)
 						{
@@ -430,9 +409,10 @@ public class ProcessSend implements Runnable {
 				while(sentinel)
 				{
 					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 					boolean temp = true;
 					
