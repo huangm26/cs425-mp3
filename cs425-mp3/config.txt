@@ -4,7 +4,6 @@
 ## Number of processes should be an integer larger than 4
 ## Leave IP blank if not applicable
 ## Delay in ms, should be an integer
-## Drop rate between 0 and 100, should be an integer
 
 # NumberProc 4
 

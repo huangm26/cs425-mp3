@@ -3,6 +3,7 @@ package connect;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import message.Delete;
@@ -32,7 +33,8 @@ public class ReadInput implements Runnable {
 			do {
 				System.out.println("Enter your command");
 				String content = scanner.nextLine();
-				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+				DateFormat dateFormat = new SimpleDateFormat(
+						"yyyy/MM/dd HH:mm:ss");
 				Date date = new Date();
 				String timeStamp = dateFormat.format(date);
 				if (content != null) {
@@ -60,8 +62,8 @@ public class ReadInput implements Runnable {
 								key = Integer.valueOf(contentArr[1]);
 								level = Integer.valueOf(contentArr[2]);
 								destID = getHashingValue(key);
-								Get get = new Get(Process.ID, destID,
-										date, key, Process.messageID, level);
+								Get get = new Get(Process.ID, destID, date,
+										key, Process.messageID, level);
 								afterMessageGenerated(get, validInput);
 							}
 							break;
@@ -74,9 +76,11 @@ public class ReadInput implements Runnable {
 								value = contentArr[2];
 								level = Integer.valueOf(contentArr[3]);
 								destID = getHashingValue(key);
-								System.out.println("Inserting to server " + destID);
+								System.out.println("Inserting to server "
+										+ destID);
 								Insert insert = new Insert(Process.ID, destID,
-										date, key, Process.messageID, value, level);
+										date, key, Process.messageID, value,
+										level);
 								afterMessageGenerated(insert, validInput);
 							}
 							break;
@@ -90,15 +94,57 @@ public class ReadInput implements Runnable {
 								level = Integer.valueOf(contentArr[3]);
 								destID = getHashingValue(key);
 								Update update = new Update(Process.ID, destID,
-										date, key, Process.messageID, value, level);
+										date, key, Process.messageID, value,
+										level);
 								afterMessageGenerated(update, validInput);
+							}
+							break;
+
+						// search key
+						case "search":
+							if (len == 2 && isInteger(contentArr[1])) {
+								int[] place = new int[3];
+								key = Integer.valueOf(contentArr[1]);
+								destID = getHashingValue(key);
+								if (destID == 0) {
+									place[0] = Process.numProc - 1;
+									place[1] = destID;
+									place[2] = 1;
+								} else if (destID == Process.numProc - 1) {
+									place[0] = Process.numProc - 2;
+									place[1] = Process.numProc - 1;
+									place[2] = 0;
+								} else {
+									place[0] = destID - 1;
+									place[1] = destID;
+									place[2] = destID + 1;
+								}
+								System.out.println(String.format(
+										"Servers that store the key %d", key));
+								System.out.println("***************");
+								System.out.println(String.format("%d %d %d",
+										place[0], place[1], place[2]));
+								System.out.println("***************");
 							}
 							break;
 						}
 					}
+					// show all
+					else if (content.equals("show-all")) {
+						System.out.println("All key-value pairs stored are");
+						System.out.println("***************");
+						for (Entry<Integer, String> entry : Process.dataStore
+								.entrySet()) {
+							key = entry.getKey();
+							value = entry.getValue();
+							System.out.println(String.format("%d => %s", key,
+									value));
+						}
+						System.out.println("***************");
+					}
 				}
 			} while (!validInput);
-			scanner.close();
+			 scanner.close();
 		}
 	}
 
