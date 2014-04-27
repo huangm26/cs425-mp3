@@ -11,7 +11,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -36,8 +36,11 @@ public class Process {
 	public static DatagramChannel myChannel;
 	public static int numProc; // number of processes
 	public static int avgDelayTo1, avgDelayTo2, avgDelayTo3;
+
 	public static Hashtable<Integer, String> dataStore; // Hashtable is already
 														// synchronized
+	public static Hashtable<Integer, Date> dataTimetable;
+
 	public static Queue<Message> inputQueue;
 	public static Queue<Message> receiveQueue;
 	// public static ArrayList<Message> ackList;
@@ -80,6 +83,7 @@ public class Process {
 		inputQueue = new LinkedList<Message>();
 		receiveQueue = new LinkedList<Message>();
 		dataStore = new Hashtable<Integer, String>();
+		dataTimetable = new Hashtable<Integer, Date>();
 		messageID = 0;
 		// ackList = new ArrayList<Message>();
 		ack = new boolean[10000][numProc];
@@ -161,29 +165,25 @@ public class Process {
 
 	private static void onRecvGet(Get g) throws IOException,
 			InterruptedException {
+		String value = null;
+		Date timeStamp = null;
 		if (dataStore.containsKey(g.key)) {
-			String content = dataStore.get(g.key);
-
-			// System.out.println("This is before resp get " + content);
-			Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp,
-					g.key, g.messageID, content, g.level);
-			send((Message) resp, g.from);
-		} else {
-			String content = null;
-			Get_resp resp = new Get_resp(Process.ID, g.from, g.timeStamp,
-					g.key, g.messageID, content, g.level);
-			send((Message) resp, g.from);
+			value = dataStore.get(g.key);
+			timeStamp = dataTimetable.get(g.key);
 		}
+		Get_resp resp = new Get_resp(Process.ID, g.from, timeStamp, g.key,
+				g.messageID, value, g.level);
+		send((Message) resp, g.from);
 	}
 
 	private static void onRecvInsert(Insert i) throws IOException,
 			InterruptedException {
 		if (!dataStore.containsKey(i.key)) {
 			dataStore.put(i.key, i.value);
+			dataTimetable.put(i.key, i.timeStamp);
 		}
 		// no matter contains key or not, send ack anyway to prevent deadlock
-		Insert_ack ack = new Insert_ack(Process.ID, i.from, i.timeStamp, i.key,
-				i.messageID);
+		Insert_ack ack = new Insert_ack(Process.ID, i.from, i.key, i.messageID);
 		send((Message) ack, i.from);
 	}
 
@@ -192,15 +192,16 @@ public class Process {
 		// If key already exists, the old value will be replaced
 		if (dataStore.containsKey(u.key)) {
 			dataStore.put(u.key, u.value);
+			dataTimetable.put(u.key, u.timeStamp);
 		}
-		Update_ack ack = new Update_ack(Process.ID, u.from, u.timeStamp, u.key,
-				u.messageID);
+		Update_ack ack = new Update_ack(Process.ID, u.from, u.key, u.messageID);
 		send((Message) ack, u.from);
 	}
 
 	private static void onRecvDelete(Delete d) {
 		if (dataStore.containsKey(d.key)) {
 			dataStore.remove(d.key);
+			dataTimetable.remove(d.key);
 		}
 		// ////not sure if needs delete
 	}
@@ -226,8 +227,8 @@ public class Process {
 			// if haven't received response of this message
 			if (!Process.get_level_one[resp.messageID]) {
 				System.out.println("***************");
-				System.out.println("This is the result from get: "
-						+ resp.content);
+				System.out
+						.println("This is the result from get: " + resp.value);
 				System.out.println("***************");
 				Process.get_level_one[resp.messageID] = true;
 			}
@@ -250,11 +251,11 @@ public class Process {
 			if (resp.level == 9) {
 				System.out.println("***************");
 				System.out.println("This is the result from get: "
-						+ store_resp[resp.messageID].content);
+						+ store_resp[resp.messageID].value);
 				System.out.println("***************");
 			}
 			// starting Read Repair once all responses received
-			
+
 		}
 
 	}

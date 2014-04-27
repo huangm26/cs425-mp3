@@ -8,14 +8,12 @@ public abstract class Message implements Serializable {
 	
 	public int from;
 	public int to;
-	public Date timeStamp;
 	public int key;
 	public int messageID;
 	
-	public Message(int from, int to, Date timeStamp, int key, int messageID) {
+	public Message(int from, int to, int key, int messageID) {
 		this.to = to;
 		this.from = from;
-		this.timeStamp = timeStamp;
 		this.key = key;
 		this.messageID = messageID;
 	}

@@ -1,7 +1,5 @@
 package connect;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -33,10 +31,7 @@ public class ReadInput implements Runnable {
 			do {
 				System.out.println("Enter your command");
 				String content = scanner.nextLine();
-				DateFormat dateFormat = new SimpleDateFormat(
-						"yyyy/MM/dd HH:mm:ss");
-				Date date = new Date();
-				String timeStamp = dateFormat.format(date);
+				Date timeStamp = new Date();
 				if (content != null) {
 					String[] contentArr = content.split(" ");
 					int len = contentArr.length;
@@ -50,7 +45,7 @@ public class ReadInput implements Runnable {
 								key = Integer.valueOf(contentArr[1]);
 								destID = getHashingValue(key);
 								Delete delete = new Delete(Process.ID, destID,
-										date, key, Process.messageID);
+										key, Process.messageID);
 								afterMessageGenerated(delete, validInput);
 							}
 							break;
@@ -62,8 +57,8 @@ public class ReadInput implements Runnable {
 								key = Integer.valueOf(contentArr[1]);
 								level = Integer.valueOf(contentArr[2]);
 								destID = getHashingValue(key);
-								Get get = new Get(Process.ID, destID, date,
-										key, Process.messageID, level);
+								Get get = new Get(Process.ID, destID, key,
+										Process.messageID, level);
 								afterMessageGenerated(get, validInput);
 							}
 							break;
@@ -79,7 +74,7 @@ public class ReadInput implements Runnable {
 								System.out.println("Inserting to server "
 										+ destID);
 								Insert insert = new Insert(Process.ID, destID,
-										date, key, Process.messageID, value,
+										timeStamp, key, Process.messageID, value,
 										level);
 								afterMessageGenerated(insert, validInput);
 							}
@@ -94,7 +89,7 @@ public class ReadInput implements Runnable {
 								level = Integer.valueOf(contentArr[3]);
 								destID = getHashingValue(key);
 								Update update = new Update(Process.ID, destID,
-										date, key, Process.messageID, value,
+										timeStamp, key, Process.messageID, value,
 										level);
 								afterMessageGenerated(update, validInput);
 							}
@@ -137,14 +132,15 @@ public class ReadInput implements Runnable {
 								.entrySet()) {
 							key = entry.getKey();
 							value = entry.getValue();
-							System.out.println(String.format("%d => %s", key,
-									value));
+							Date t = Process.dataTimetable.get(key);
+							System.out.println(String.format("%d => %s [%s]", key,
+									value, t.toString()));
 						}
 						System.out.println("***************");
 					}
 				}
 			} while (!validInput);
-			 scanner.close();
+			scanner.close();
 		}
 	}
 
