@@ -127,7 +127,6 @@ public class Process {
 			} else if (msg.isInsert_ack()) {
 				System.out.println("Insert_ack");
 				onRecvInsert_ack((Insert_ack) msg);
-
 			} else if (msg.isUpdate_ack()) {
 				System.out.println("Update_ack");
 				onRecvUpdate_ack((Update_ack) msg);
@@ -232,31 +231,30 @@ public class Process {
 				System.out.println("***************");
 				Process.get_level_one[resp.messageID] = true;
 			}
-		} else if (resp.level == 9)
-		// it is a level 9 response
-		{
-			Process.get_level_all[resp.messageID]++;
+		}
 
-			// if this is the first response, store it
-			if (store_resp[resp.messageID] == null) {
-				store_resp[resp.messageID] = resp;
-			} else
+		Process.get_level_all[resp.messageID]++;
+		// if this is the first response, store it
+		if (store_resp[resp.messageID] == null) {
+			store_resp[resp.messageID] = resp;
+		} else {
 			// if not first one, compare
-			{
-				// the received response is the latest
-				if (resp.timeStamp
-						.compareTo(store_resp[resp.messageID].timeStamp) > 0) {
-					store_resp[resp.messageID] = resp;
-				}
+			// the received response is the latest
+			if (resp.timeStamp.compareTo(store_resp[resp.messageID].timeStamp) > 0) {
+				store_resp[resp.messageID] = resp;
 			}
+		}
 
-			// has get all responses
-			if (Process.get_level_all[resp.messageID] == 3) {
+		// has got all responses
+		if (Process.get_level_all[resp.messageID] == 3) {
+			if (resp.level == 9) {
 				System.out.println("***************");
 				System.out.println("This is the result from get: "
 						+ store_resp[resp.messageID].content);
 				System.out.println("***************");
 			}
+			// starting Read Repair once all responses received
+			
 		}
 
 	}
