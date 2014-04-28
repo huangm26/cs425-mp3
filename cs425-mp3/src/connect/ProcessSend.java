@@ -62,7 +62,6 @@ public class ProcessSend implements Runnable {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					// special case when destionation is P0
@@ -120,7 +119,6 @@ public class ProcessSend implements Runnable {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					boolean temp = true;
@@ -165,7 +163,6 @@ public class ProcessSend implements Runnable {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					// special case when destionation is P0
@@ -223,7 +220,6 @@ public class ProcessSend implements Runnable {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					boolean temp = true;
@@ -268,7 +264,6 @@ public class ProcessSend implements Runnable {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 
@@ -326,7 +321,6 @@ public class ProcessSend implements Runnable {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					boolean temp = true;

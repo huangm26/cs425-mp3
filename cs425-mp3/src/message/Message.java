@@ -45,4 +45,12 @@ public abstract class Message implements Serializable {
 	public boolean isGet_resp() {
 		return this instanceof Get_resp;
 	}
+	
+	public boolean isRepairRequest() {
+		return this instanceof RepairRequest;
+	}
+	
+	public boolean isRepairAck() {
+		return this instanceof RepairAck;
+	}
 }

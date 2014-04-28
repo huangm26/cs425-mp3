@@ -24,6 +24,8 @@ import message.Get_resp;
 import message.Insert;
 import message.Insert_ack;
 import message.Message;
+import message.RepairAck;
+import message.RepairRequest;
 import message.Update;
 import message.Update_ack;
 import util.Configuration;
@@ -49,6 +51,9 @@ public class Process {
 	// starts from 0, and if reaches 3, means it have get all responses
 	public static int[] get_level_all;
 	public static Get_resp[] store_resp;
+	public static int[] repairAck;
+
+	public static final int MAX_MESSAGE_NUM = 10000;
 
 	public static void main(String args[]) throws IOException,
 			InterruptedException {
@@ -86,10 +91,11 @@ public class Process {
 		dataTimetable = new Hashtable<Integer, Date>();
 		messageID = 0;
 		// ackList = new ArrayList<Message>();
-		ack = new boolean[10000][numProc];
-		get_level_one = new boolean[10000];
-		get_level_all = new int[10000];
-		store_resp = new Get_resp[10000];
+		ack = new boolean[MAX_MESSAGE_NUM][numProc];
+		repairAck = new int[MAX_MESSAGE_NUM];
+		get_level_one = new boolean[MAX_MESSAGE_NUM];
+		get_level_all = new int[MAX_MESSAGE_NUM];
+		store_resp = new Get_resp[MAX_MESSAGE_NUM];
 		init_array();
 
 		// start ReadInput thread
@@ -134,6 +140,12 @@ public class Process {
 			} else if (msg.isUpdate_ack()) {
 				System.out.println("Update_ack");
 				onRecvUpdate_ack((Update_ack) msg);
+			} else if (msg.isRepairRequest()) {
+				System.out.println("RepairRequest");
+				onRecvRepairRequest((RepairRequest) msg);
+			} else if (msg.isRepairAck()) {
+				System.out.println("RepairAck");
+				onRecvRepairAck((RepairAck) msg);
 			}
 		}
 	}
@@ -171,8 +183,8 @@ public class Process {
 			value = dataStore.get(g.key);
 			timeStamp = dataTimetable.get(g.key);
 		}
-		Get_resp resp = new Get_resp(Process.ID, g.from, timeStamp, g.key,
-				g.messageID, value, g.level);
+		Get_resp resp = new Get_resp(ID, g.from, timeStamp, g.key, g.messageID,
+				value, g.level);
 		send((Message) resp, g.from);
 	}
 
@@ -183,7 +195,7 @@ public class Process {
 			dataTimetable.put(i.key, i.timeStamp);
 		}
 		// no matter contains key or not, send ack anyway to prevent deadlock
-		Insert_ack ack = new Insert_ack(Process.ID, i.from, i.key, i.messageID);
+		Insert_ack ack = new Insert_ack(ID, i.from, i.key, i.messageID);
 		send((Message) ack, i.from);
 	}
 
@@ -194,7 +206,7 @@ public class Process {
 			dataStore.put(u.key, u.value);
 			dataTimetable.put(u.key, u.timeStamp);
 		}
-		Update_ack ack = new Update_ack(Process.ID, u.from, u.key, u.messageID);
+		Update_ack ack = new Update_ack(ID, u.from, u.key, u.messageID);
 		send((Message) ack, u.from);
 	}
 
@@ -206,35 +218,35 @@ public class Process {
 		// ////not sure if needs delete
 	}
 
-	private static void onRecvInsert_ack(Insert_ack ack) {
+	private static void onRecvInsert_ack(Insert_ack iAck) {
 		// mark the ack as true
 		// System.out.println("ack from " + ack.from);
 		// System.out.println("messageID " + ack.messageID);
-		Process.ack[ack.messageID][ack.from] = true;
+		ack[iAck.messageID][iAck.from] = true;
 	}
 
-	private static void onRecvUpdate_ack(Update_ack ack) {
+	private static void onRecvUpdate_ack(Update_ack uAck) {
 		// mark the ack as true
-		Process.ack[ack.messageID][ack.from] = true;
+		ack[uAck.messageID][uAck.from] = true;
 	}
 
 	private static void onRecvGet_resp(Get_resp resp) {
 		// mark the ack as true
-		Process.ack[resp.messageID][resp.from] = true;
+		ack[resp.messageID][resp.from] = true;
 
 		// It is a level one response
 		if (resp.level == 1) {
 			// if haven't received response of this message
-			if (!Process.get_level_one[resp.messageID]) {
+			if (!get_level_one[resp.messageID]) {
 				System.out.println("***************");
 				System.out
 						.println("This is the result from get: " + resp.value);
 				System.out.println("***************");
-				Process.get_level_one[resp.messageID] = true;
+				get_level_one[resp.messageID] = true;
 			}
 		}
 
-		Process.get_level_all[resp.messageID]++;
+		get_level_all[resp.messageID]++;
 		// if this is the first response, store it
 		if (store_resp[resp.messageID] == null) {
 			store_resp[resp.messageID] = resp;
@@ -247,27 +259,62 @@ public class Process {
 		}
 
 		// has got all responses
-		if (Process.get_level_all[resp.messageID] == 3) {
+		if (get_level_all[resp.messageID] == 3) {
+			Get_resp targetResp = store_resp[resp.messageID];
 			if (resp.level == 9) {
 				System.out.println("***************");
 				System.out.println("This is the result from get: "
-						+ store_resp[resp.messageID].value);
+						+ targetResp.value);
 				System.out.println("***************");
 			}
 			// starting Read Repair once all responses received
-
+			// no matter what consistency level is applied
+			repairInBackground(targetResp);
 		}
 
 	}
 
+	private static void repairInBackground(Get_resp resp) {
+		RepairThread rt = new RepairThread(resp);
+		new Thread(rt).start();
+	}
+
+	private static void onRecvRepairRequest(RepairRequest rr)
+			throws IOException, InterruptedException {
+		if (dataStore.containsKey(rr.key)) {
+			// Update local table to latest data
+			System.out.println(String.format(
+					"Repair server %d's [%d => %s] to [%d => %s]", ID, rr.key,
+					dataStore.get(rr.key), rr.key, rr.value));
+			dataStore.put(rr.key, rr.value);
+			dataTimetable.put(rr.key, rr.timeStamp);
+			// Send back ack
+			RepairAck ra = new RepairAck(ID, rr.from, rr.key, rr.messageID);
+			send(ra, rr.from);
+		} else {
+			System.out.println("****SOMETHING WRONG IF THIS LINE APPEAR****");
+		}
+	}
+
+	private static void onRecvRepairAck(RepairAck ra) {
+		// using a new ack table, each GET message id corresponds to a
+		// repair operation
+		repairAck[ra.messageID]++;
+		if (repairAck[ra.messageID] == 3) {
+			System.out.println(String.format("Repair for key %d successful",
+					ra.key));
+		}
+	}
+
 	private static void init_array() {
-		for (int i = 0; i < 10000; i++) {
+		for (int i = 0; i < MAX_MESSAGE_NUM; i++) {
 			for (int j = 0; j < 3; j++) {
 				ack[i][j] = false;
 			}
 			get_level_one[i] = false;
 			get_level_all[i] = 0;
 			store_resp[i] = null;
+			repairAck[i] = 0;
 		}
 	}
 
@@ -276,23 +323,23 @@ public class Process {
 		System.out.println("sending response");
 		Random rand = new Random();
 		// Delay in range [0, 2*mean delay]
-		// int randomDelay = rand.nextInt(2 * Process.delayTime + 1);
+		// int randomDelay = rand.nextInt(2 * delayTime + 1);
 
 		DatagramChannel channel;
 		channel = DatagramChannel.open();
 		int destPort = 6000 + to;
 		try {
 			InetSocketAddress destAddress = new InetSocketAddress(
-					InetAddress.getByName(Process.IP), destPort);
+					InetAddress.getByName(IP), destPort);
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			ObjectOutputStream os = new ObjectOutputStream(outputStream);
 			os.writeObject(message);
 			byte[] data = outputStream.toByteArray();
 			ByteBuffer buffer = ByteBuffer.wrap(data);
 			// channel.connect(new
-			// InetSocketAddress(InetAddress.getByName(Process.IP), destPort));
+			// InetSocketAddress(InetAddress.getByName(IP), destPort));
 			int bytesend = channel.send(buffer, new InetSocketAddress(
-					InetAddress.getByName(Process.IP), destPort));
+					InetAddress.getByName(IP), destPort));
 			// int bytesend = channel.write(buffer);
 			// channel.disconnect();
 			// System.out.println(String.format("send %d bytes from %d to %d",
