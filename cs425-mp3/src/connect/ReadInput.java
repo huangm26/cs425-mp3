@@ -71,8 +71,6 @@ public class ReadInput implements Runnable {
 								value = contentArr[2];
 								level = Integer.valueOf(contentArr[3]);
 								destID = getHashingValue(key);
-								System.out.println("Inserting to server "
-										+ destID);
 								Insert insert = new Insert(Process.ID, destID,
 										timeStamp, key, Process.messageID, value,
 										level);

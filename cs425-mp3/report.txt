@@ -1,0 +1,12 @@
+For this mp, we use Hashtable as our datastore for each of our server. To simulate peer to peer system, we use UDP for communication between servers.
+
+Each time a specific server has received a command, we first compute the hash value of the key (in our implementation, it's just a mod computation). The hash value represents the server ID of one of the replicas, the other two replicas are located next to the targeted one. For instance, if the system consists of 4 servers (with ID 0, 1, 2, 3), and the hash value for a specific key is 2, then the replicas are located at server 1, 2, 3.
+
+For an INSERT operation, we first compute the hash value of the given key, and send an insert request to all 3 servers that should hold the replica. If the local datastore does not have the given key, then insert the key-value pair. Each server will also send back an acknowledgement to the initiation server.
+
+For other operations, the detail are similar. They are all very basic hashtable operations.
+
+For consistency level, if it's ONE, then the specific operation is successful once the first acknowledgement has been received. While for ALL, all 3 acknowledgement should be received in order to finish the operation.
+
+For consistency repair, we use read-repair. Each time a GET is performed, no matter what the consistency level is, we collect data from all 3 repilcas and pick the latest one (with largest timestamp), send it to all the other replicas. The replica receive the repair requst will update accordingly, and send back an acknowledgement to the repair requst initiator. After all the acknowledgements have been received, the read-repair is completed.
+

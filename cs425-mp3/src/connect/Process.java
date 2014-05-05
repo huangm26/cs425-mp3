@@ -113,38 +113,27 @@ public class Process {
 	}
 
 	public static void receiveAll() throws IOException, InterruptedException {
-		// System.out.println("receiving");
 		Message msg = null;
 		receiveQueue.add(receive());
 		while (receiveQueue.peek() != null) {
-			// System.out.println("have");
 			msg = receiveQueue.poll();
 			if (msg.isGet()) {
-				System.out.println("get");
 				onRecvGet((Get) msg);
 			} else if (msg.isInsert()) {
-				System.out.println("insert");
 				onRecvInsert((Insert) msg);
 			} else if (msg.isUpdate()) {
-				System.out.println("update");
 				onRecvUpdate((Update) msg);
 			} else if (msg.isDelete()) {
-				System.out.println("delete");
 				onRecvDelete((Delete) msg);
 			} else if (msg.isGet_resp()) {
-				System.out.println("Get_resp");
 				onRecvGet_resp((Get_resp) msg);
 			} else if (msg.isInsert_ack()) {
-				System.out.println("Insert_ack");
 				onRecvInsert_ack((Insert_ack) msg);
 			} else if (msg.isUpdate_ack()) {
-				System.out.println("Update_ack");
 				onRecvUpdate_ack((Update_ack) msg);
 			} else if (msg.isRepairRequest()) {
-				System.out.println("RepairRequest");
 				onRecvRepairRequest((RepairRequest) msg);
 			} else if (msg.isRepairAck()) {
-				System.out.println("RepairAck");
 				onRecvRepairAck((RepairAck) msg);
 			}
 		}
@@ -263,8 +252,7 @@ public class Process {
 			Get_resp targetResp = store_resp[resp.messageID];
 			if (resp.level == 9) {
 				System.out.println("***************");
-				System.out.println("This is the result from get: "
-						+ targetResp.value);
+				System.out.println("result for GET: " + targetResp.value);
 				System.out.println("***************");
 			}
 			// starting Read Repair once all responses received
@@ -284,7 +272,7 @@ public class Process {
 		if (dataStore.containsKey(rr.key)) {
 			// Update local table to latest data
 			System.out.println(String.format(
-					"Repair server %d's [%d => %s] to [%d => %s]", ID, rr.key,
+					"Repairing server %d's [%d => %s] to [%d => %s]", ID, rr.key,
 					dataStore.get(rr.key), rr.key, rr.value));
 			dataStore.put(rr.key, rr.value);
 			dataTimetable.put(rr.key, rr.timeStamp);
@@ -320,7 +308,6 @@ public class Process {
 
 	private static void send(Message message, int to) throws IOException,
 			InterruptedException {
-		System.out.println("sending response");
 		Random rand = new Random();
 		// Delay in range [0, 2*mean delay]
 		// int randomDelay = rand.nextInt(2 * delayTime + 1);

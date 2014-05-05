@@ -10,7 +10,7 @@ public class ProcessSend implements Runnable {
 	@Override
 	public void run() {
 		// if there are messages in the queue, try to send them all
-		System.out.println("starting send thread");
+		// System.out.println("starting send thread");
 		while (true) {
 			try {
 				Thread.sleep(500);
@@ -19,7 +19,6 @@ public class ProcessSend implements Runnable {
 			}
 			if (!Process.inputQueue.isEmpty()) {
 				Message m = Process.inputQueue.poll();
-				System.out.println("ready to send message");
 				Real_send send1 = new Real_send(m, m.to, Process.avgDelayTo2);
 				new Thread(send1).start();
 
@@ -256,7 +255,6 @@ public class ProcessSend implements Runnable {
 			}
 
 		} else if (m.isGet()) {
-			System.out.println("IS a get");
 			// level one case
 			if (((Get) m).level == 1) {
 				boolean sentinel = true;
